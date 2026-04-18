@@ -7,10 +7,15 @@ const supabase = createClient(
 
 exports.handler = async (event) => {
   const headers = {
-    "Access-Control-Allow-Origin": "https://thedigita-2011.com",
+    "Access-Control-Allow-Origin": "*",
     "Access-Control-Allow-Headers": "Content-Type, Authorization",
+    "Access-Control-Allow-Methods": "GET, OPTIONS",
     "Content-Type": "application/json",
   };
+
+  if (event.httpMethod === "OPTIONS") {
+    return { statusCode: 204, headers, body: "" };
+  }
 
   const { adminKey } = event.queryStringParameters || {};
 
@@ -36,6 +41,7 @@ exports.handler = async (event) => {
       body: JSON.stringify({ links: data }),
     };
   } catch (err) {
+    console.error("Get links error:", err);
     return {
       statusCode: 500,
       headers,
