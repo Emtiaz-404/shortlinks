@@ -1,79 +1,121 @@
-// ===== CONSTANTS =====
-const API_BASE = "";
+/* =============================================
+   THEDIGITA SHORT LINK APP - FRONTEND LOGIC
+============================================= */
+
 let ADMIN_KEY = "";
 
-// ===== AUTH =====
-function login() {
-  const key = document.getElementById("loginKey").value.trim();
-  if (!key) return;
+// =============================================
+//  AUTH
+// =============================================
+
+async function login() {
+  const keyInput = document.getElementById("loginKey");
+  const key = keyInput.value.trim();
+
+  if (!key) {
+    keyInput.focus();
+    return;
+  }
 
   ADMIN_KEY = key;
-  sessionStorage.setItem("adminKey", key);
 
-  // Try loading links to verify key
-  verifyAndLogin();
-}
+  // Show loader
+  setLoginLoading(true);
+  document.getElementById("loginError").classList.add("hidden");
 
-async function verifyAndLogin() {
   try {
-    const res = await fetch(`/api/links?adminKey=${encodeURIComponent(ADMIN_KEY)}`);
+    const res = await fetch(`/api/links?adminKey=${encodeURIComponent(key)}`);
     const data = await res.json();
 
-    if (res.status === 401) {
-      document.getElementById("loginError").classList.remove("hidden");
+    if (res.status === 401 || data.error === "Unauthorized") {
       ADMIN_KEY = "";
       sessionStorage.removeItem("adminKey");
+      document.getElementById("loginError").classList.remove("hidden");
+      setLoginLoading(false);
       return;
     }
 
-    document.getElementById("loginError").classList.add("hidden");
+    // Success
+    sessionStorage.setItem("adminKey", key);
     showDashboard(data.links || []);
   } catch (err) {
+    console.error("Login error:", err);
     document.getElementById("loginError").classList.remove("hidden");
+    ADMIN_KEY = "";
   }
+
+  setLoginLoading(false);
+}
+
+function setLoginLoading(loading) {
+  const btn = document.getElementById("loginBtn");
+  const text = document.getElementById("loginBtnText");
+  const loader = document.getElementById("loginBtnLoader");
+  btn.disabled = loading;
+  text.classList.toggle("hidden", loading);
+  loader.classList.toggle("hidden", !loading);
 }
 
 function logout() {
   ADMIN_KEY = "";
   sessionStorage.removeItem("adminKey");
+
   document.getElementById("dashboardScreen").classList.add("hidden");
-  document.getElementById("loginScreen").classList.remove("hidden");
-  document.getElementById("loginScreen").classList.add("active");
+  const loginScreen = document.getElementById("loginScreen");
+  loginScreen.classList.remove("hidden");
+  loginScreen.style.display = "flex";
   document.getElementById("loginKey").value = "";
+  document.getElementById("loginError").classList.add("hidden");
 }
 
 function showDashboard(links) {
-  document.getElementById("loginScreen").classList.add("hidden");
-  document.getElementById("loginScreen").classList.remove("active");
-  document.getElementById("dashboardScreen").classList.remove("hidden");
+  const loginScreen = document.getElementById("loginScreen");
+  loginScreen.classList.add("hidden");
+  loginScreen.style.display = "none";
+
+  const dashboard = document.getElementById("dashboardScreen");
+  dashboard.classList.remove("hidden");
+  dashboard.style.display = "block";
+
   renderLinks(links);
 }
 
-// ===== CREATE LINK =====
+// =============================================
+//  CREATE LINK
+// =============================================
+
 async function createLink() {
-  const originalUrl = document.getElementById("originalUrl").value.trim();
-  const customSlug = document.getElementById("customSlug").value.trim();
-  const password = document.getElementById("linkPassword").value.trim();
+  const originalUrl   = document.getElementById("originalUrl").value.trim();
+  const customSlug    = document.getElementById("customSlug").value.trim();
+  const password      = document.getElementById("linkPassword").value.trim();
 
-  const errorEl = document.getElementById("createError");
-  const resultBox = document.getElementById("resultBox");
-  const btn = document.getElementById("createBtn");
-  const btnText = document.getElementById("createBtnText");
-  const btnLoader = document.getElementById("createBtnLoader");
+  const errorEl  = document.getElementById("createError");
+  const resultEl = document.getElementById("resultBox");
+  const btn      = document.getElementById("createBtn");
+  const btnText  = document.getElementById("createBtnText");
+  const btnLoad  = document.getElementById("createBtnLoader");
 
+  // Reset
   errorEl.classList.add("hidden");
-  resultBox.classList.add("hidden");
+  resultEl.classList.add("hidden");
 
+  // Validate
   if (!originalUrl) {
-    errorEl.textContent = "❌ Please enter a destination URL";
-    errorEl.classList.remove("hidden");
+    showCreateError("Please enter a destination URL");
     return;
   }
 
-  // Set loading state
+  try {
+    new URL(originalUrl);
+  } catch {
+    showCreateError("Please enter a valid URL (include https://)");
+    return;
+  }
+
+  // Loading
   btn.disabled = true;
   btnText.classList.add("hidden");
-  btnLoader.classList.remove("hidden");
+  btnLoad.classList.remove("hidden");
 
   try {
     const res = await fetch("/api/create", {
@@ -82,7 +124,7 @@ async function createLink() {
       body: JSON.stringify({
         originalUrl,
         customSlug: customSlug || undefined,
-        password: password || undefined,
+        password: password   || undefined,
         adminKey: ADMIN_KEY,
       }),
     });
@@ -90,48 +132,63 @@ async function createLink() {
     const data = await res.json();
 
     if (!res.ok) {
-      errorEl.textContent = "❌ " + (data.error || "Failed to create link");
-      errorEl.classList.remove("hidden");
+      showCreateError(data.error || "Failed to create link. Please try again.");
       return;
     }
 
-    // Show success
-    document.getElementById("resultUrl").textContent = data.shortUrl;
-    document.getElementById("resultOriginal").textContent =
-      "→ " + data.originalUrl;
-    resultBox.classList.remove("hidden");
+    // Show result
+    document.getElementById("resultUrl").textContent      = data.shortUrl;
+    document.getElementById("resultOriginal").textContent = data.originalUrl;
+    resultEl.classList.remove("hidden");
 
-    // Clear form
-    document.getElementById("originalUrl").value = "";
-    document.getElementById("customSlug").value = "";
+    // Clear inputs
+    document.getElementById("originalUrl").value  = "";
+    document.getElementById("customSlug").value   = "";
     document.getElementById("linkPassword").value = "";
 
-    // Reload links
+    // Reload table
     loadLinks();
+
   } catch (err) {
-    errorEl.textContent = "❌ Network error. Please try again.";
-    errorEl.classList.remove("hidden");
-  } finally {
-    btn.disabled = false;
-    btnText.classList.remove("hidden");
-    btnLoader.classList.add("hidden");
+    console.error("Create error:", err);
+    showCreateError("Network error. Please check your connection and try again.");
   }
+
+  // Reset loading
+  btn.disabled = false;
+  btnText.classList.remove("hidden");
+  btnLoad.classList.add("hidden");
 }
 
-// ===== LOAD LINKS =====
+function showCreateError(msg) {
+  const el = document.getElementById("createError");
+  el.textContent = "❌ " + msg;
+  el.classList.remove("hidden");
+}
+
+// =============================================
+//  LOAD & RENDER LINKS
+// =============================================
+
 async function loadLinks() {
   const loaderEl = document.getElementById("linksLoader");
-  const tableEl = document.getElementById("linksTable");
-  const emptyEl = document.getElementById("linksEmpty");
+  const tableEl  = document.getElementById("linksTable");
+  const emptyEl  = document.getElementById("linksEmpty");
+  const refreshIcon = document.getElementById("refreshIcon");
 
+  // Show loader
   loaderEl.classList.remove("hidden");
   tableEl.classList.add("hidden");
   emptyEl.classList.add("hidden");
 
+  // Animate refresh icon
+  if (refreshIcon) {
+    refreshIcon.style.display = "inline-block";
+    refreshIcon.style.animation = "spin 0.7s linear infinite";
+  }
+
   try {
-    const res = await fetch(
-      `/api/links?adminKey=${encodeURIComponent(ADMIN_KEY)}`
-    );
+    const res  = await fetch(`/api/links?adminKey=${encodeURIComponent(ADMIN_KEY)}`);
     const data = await res.json();
 
     if (!res.ok) {
@@ -141,29 +198,33 @@ async function loadLinks() {
 
     renderLinks(data.links || []);
   } catch (err) {
+    console.error("Load links error:", err);
     loaderEl.classList.add("hidden");
-    console.error("Failed to load links:", err);
+  }
+
+  if (refreshIcon) {
+    refreshIcon.style.animation = "";
   }
 }
 
 function renderLinks(links) {
   const loaderEl = document.getElementById("linksLoader");
-  const tableEl = document.getElementById("linksTable");
-  const emptyEl = document.getElementById("linksEmpty");
-  const bodyEl = document.getElementById("linksBody");
+  const tableEl  = document.getElementById("linksTable");
+  const emptyEl  = document.getElementById("linksEmpty");
+  const bodyEl   = document.getElementById("linksBody");
 
   loaderEl.classList.add("hidden");
 
   // Update stats
-  const today = new Date().toDateString();
-  const todayCount = links.filter(
-    (l) => new Date(l.created_at).toDateString() === today
-  ).length;
+  const today       = new Date().toDateString();
+  const todayCount  = links.filter(l => new Date(l.created_at).toDateString() === today).length;
   const totalClicks = links.reduce((sum, l) => sum + (l.clicks || 0), 0);
+  const topClicks   = links.length ? Math.max(...links.map(l => l.clicks || 0)) : 0;
 
-  document.getElementById("totalLinks").textContent = links.length;
-  document.getElementById("totalClicks").textContent = totalClicks;
-  document.getElementById("todayLinks").textContent = todayCount;
+  animateNumber("totalLinks",  links.length);
+  animateNumber("totalClicks", totalClicks);
+  animateNumber("todayLinks",  todayCount);
+  animateNumber("topClicks",   topClicks);
 
   if (links.length === 0) {
     emptyEl.classList.remove("hidden");
@@ -172,82 +233,139 @@ function renderLinks(links) {
 
   tableEl.classList.remove("hidden");
 
-  bodyEl.innerHTML = links
-    .map((link) => {
-      const shortUrl = `https://thedigita-2011.com/r/${link.slug}`;
-      const date = new Date(link.created_at).toLocaleDateString("en-US", {
-        month: "short",
-        day: "numeric",
-        year: "numeric",
-      });
+  bodyEl.innerHTML = links.map((link, index) => {
+    const shortUrl = `https://thedigita-2011.com/r/${link.slug}`;
+    const date = new Date(link.created_at).toLocaleDateString("en-US", {
+      month: "short",
+      day:   "numeric",
+      year:  "numeric",
+    });
 
-      return `
+    const isProtected = link.password ? "🔒" : "—";
+
+    return `
       <tr>
-        <td class="td-short">/r/${escapeHtml(link.slug)}</td>
-        <td class="td-original" title="${escapeHtml(link.original_url)}">
-          ${escapeHtml(link.original_url)}
+        <td class="td-num">${index + 1}</td>
+        <td class="td-short">/r/${escHtml(link.slug)}</td>
+        <td class="td-original" title="${escHtml(link.original_url)}">
+          ${escHtml(link.original_url)}
         </td>
+        <td class="td-lock">${isProtected}</td>
         <td class="td-clicks">${link.clicks || 0}</td>
         <td class="td-date">${date}</td>
         <td class="td-actions">
-          <button class="btn-sm btn-visit" onclick="window.open('${escapeHtml(shortUrl)}', '_blank')">Visit</button>
-          <button class="btn-sm btn-copy-row" onclick="copyText('${escapeHtml(shortUrl)}', this)">Copy</button>
+          <button
+            class="btn-action btn-action-visit"
+            onclick="window.open('${escHtml(shortUrl)}', '_blank')"
+          >
+            Visit
+          </button>
+          <button
+            class="btn-action btn-action-copy"
+            onclick="copyRowLink('${escHtml(shortUrl)}', this)"
+          >
+            Copy
+          </button>
         </td>
       </tr>
     `;
-    })
-    .join("");
+  }).join("");
 }
 
-// ===== UTILITIES =====
-function copyLink() {
+// =============================================
+//  COPY HELPERS
+// =============================================
+
+async function copyLink() {
   const url = document.getElementById("resultUrl").textContent;
-  copyText(url);
+  const btn = document.getElementById("copyMainBtn");
+  await copyToClipboard(url, btn, "📋 Copy Link", "✅ Copied!");
 }
 
-async function copyText(text, btn) {
+async function copyRowLink(url, btn) {
+  await copyToClipboard(url, btn, "Copy", "✓ Copied!");
+}
+
+async function copyToClipboard(text, btn, original, success) {
   try {
     await navigator.clipboard.writeText(text);
-    if (btn) {
-      const original = btn.textContent;
-      btn.textContent = "✓ Copied!";
-      setTimeout(() => (btn.textContent = original), 2000);
-    }
   } catch {
-    // Fallback
+    // Fallback for older browsers
     const el = document.createElement("textarea");
     el.value = text;
-    el.style.position = "fixed";
-    el.style.opacity = "0";
+    el.style.cssText = "position:fixed;opacity:0;pointer-events:none";
     document.body.appendChild(el);
     el.select();
     document.execCommand("copy");
     document.body.removeChild(el);
   }
+
+  if (btn) {
+    const prev = btn.textContent;
+    btn.textContent = success;
+    setTimeout(() => (btn.textContent = original || prev), 2000);
+  }
 }
 
-function escapeHtml(str) {
-  const div = document.createElement("div");
-  div.textContent = String(str);
-  return div.innerHTML;
+// =============================================
+//  UTILITIES
+// =============================================
+
+function escHtml(str) {
+  const d = document.createElement("div");
+  d.textContent = String(str || "");
+  return d.innerHTML;
 }
 
-// ===== ENTER KEY SUPPORT =====
+function animateNumber(id, target) {
+  const el = document.getElementById(id);
+  if (!el) return;
+
+  const current = parseInt(el.textContent) || 0;
+  if (current === target) return;
+
+  const step     = Math.ceil(Math.abs(target - current) / 20);
+  const dir      = target > current ? 1 : -1;
+  let   val      = current;
+
+  const timer = setInterval(() => {
+    val += dir * step;
+    if ((dir > 0 && val >= target) || (dir < 0 && val <= target)) {
+      val = target;
+      clearInterval(timer);
+    }
+    el.textContent = val;
+  }, 30);
+}
+
+// =============================================
+//  INIT
+// =============================================
+
 document.addEventListener("DOMContentLoaded", () => {
-  // Auto-login from session
+  // Auto-restore session
   const savedKey = sessionStorage.getItem("adminKey");
   if (savedKey) {
     ADMIN_KEY = savedKey;
-    verifyAndLogin();
+    document.getElementById("loginKey").value = savedKey;
+    login();
+    return;
   }
 
-  // Enter key on login
-  document.getElementById("loginKey")?.addEventListener("keypress", (e) => {
+  // Make login screen visible
+  const loginScreen = document.getElementById("loginScreen");
+  loginScreen.style.display = "flex";
+
+  // Enter key support
+  document.getElementById("loginKey")?.addEventListener("keypress", e => {
     if (e.key === "Enter") login();
   });
 
-  // Enter key on URL field
-  document.getElementById("originalUrl")?.addEventListener("keypress", (e) => {
+  document.getElementById("originalUrl")?.addEventListener("keypress", e => {
+    if (e.key === "Enter") createLink();
+  });
+
+  document.getElementById("customSlug")?.addEventListener("keypress", e => {
     if (e.key === "Enter") createLink();
   });
 });
