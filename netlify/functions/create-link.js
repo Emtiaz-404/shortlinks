@@ -1,6 +1,5 @@
 const { createClient } = require("@supabase/supabase-js");
 
-// We use Supabase FREE tier as database (or see localStorage fallback below)
 const supabase = createClient(
   process.env.SUPABASE_URL,
   process.env.SUPABASE_ANON_KEY
@@ -17,9 +16,8 @@ function generateSlug(length = 6) {
 }
 
 exports.handler = async (event) => {
-  // CORS headers
   const headers = {
-    "Access-Control-Allow-Origin": "https://thedigita-2011.com",
+    "Access-Control-Allow-Origin": "*",
     "Access-Control-Allow-Headers": "Content-Type, Authorization",
     "Access-Control-Allow-Methods": "POST, OPTIONS",
     "Content-Type": "application/json",
@@ -41,7 +39,6 @@ exports.handler = async (event) => {
     const body = JSON.parse(event.body);
     const { originalUrl, customSlug, password, adminKey } = body;
 
-    // Simple admin protection
     if (adminKey !== process.env.ADMIN_KEY) {
       return {
         statusCode: 401,
@@ -50,7 +47,6 @@ exports.handler = async (event) => {
       };
     }
 
-    // Validate URL
     if (!originalUrl) {
       return {
         statusCode: 400,
@@ -59,9 +55,8 @@ exports.handler = async (event) => {
       };
     }
 
-    let url;
     try {
-      url = new URL(originalUrl);
+      new URL(originalUrl);
     } catch {
       return {
         statusCode: 400,
@@ -82,7 +77,6 @@ exports.handler = async (event) => {
       };
     }
 
-    // Check if slug already exists
     const { data: existing } = await supabase
       .from("links")
       .select("slug")
@@ -97,7 +91,6 @@ exports.handler = async (event) => {
       };
     }
 
-    // Save to database
     const { data, error } = await supabase
       .from("links")
       .insert([
