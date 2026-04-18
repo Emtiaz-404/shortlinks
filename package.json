@@ -1,0 +1,14 @@
+{
+  "name": "shortlink-app",
+  "version": "1.0.0",
+  "description": "Short link creator using thedigita-2011.com",
+  "scripts": {
+    "dev": "netlify dev"
+  },
+  "dependencies": {
+    "@netlify/functions": "^2.4.0"
+  },
+  "devDependencies": {
+    "netlify-cli": "^17.0.0"
+  }
+}

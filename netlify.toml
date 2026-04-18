@@ -1,0 +1,26 @@
+[build]
+  publish = "public"
+  functions = "netlify/functions"
+
+[[redirects]]
+  from = "/r/:slug"
+  to = "/.netlify/functions/redirect?slug=:slug"
+  status = 200
+
+[[redirects]]
+  from = "/api/create"
+  to = "/.netlify/functions/create-link"
+  status = 200
+
+[[redirects]]
+  from = "/api/links"
+  to = "/.netlify/functions/get-links"
+  status = 200
+
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Frame-Options = "DENY"
+    X-XSS-Protection = "1; mode=block"
+    X-Content-Type-Options = "nosniff"
+    Referrer-Policy = "strict-origin-when-cross-origin"

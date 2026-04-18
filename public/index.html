@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>TheDigita Link Shortener</title>
+    <link rel="stylesheet" href="/src/style.css" />
+    <meta name="robots" content="noindex, nofollow" />
+  </head>
+  <body>
+    <!-- LOGIN SCREEN -->
+    <div id="loginScreen" class="screen active">
+      <div class="card">
+        <div class="logo">
+          <span class="logo-icon">⚡</span>
+          <h1>TheDigita Links</h1>
+          <p>Your private link shortener</p>
+        </div>
+        <div class="form-group">
+          <label>Admin Password</label>
+          <input
+            type="password"
+            id="loginKey"
+            placeholder="Enter your admin key"
+            autocomplete="current-password"
+          />
+        </div>
+        <button class="btn-primary" onclick="login()">Access Dashboard</button>
+        <div id="loginError" class="error-msg hidden">
+          ❌ Invalid admin key
+        </div>
+      </div>
+    </div>
+
+    <!-- DASHBOARD SCREEN -->
+    <div id="dashboardScreen" class="screen hidden">
+      <!-- Header -->
+      <header class="header">
+        <div class="header-inner">
+          <div class="logo-sm">
+            <span>⚡</span>
+            <strong>TheDigita Links</strong>
+          </div>
+          <button class="btn-logout" onclick="logout()">Logout</button>
+        </div>
+      </header>
+
+      <!-- Main Content -->
+      <main class="main">
+        <!-- Stats Bar -->
+        <div class="stats-bar" id="statsBar">
+          <div class="stat-item">
+            <span class="stat-num" id="totalLinks">0</span>
+            <span class="stat-label">Total Links</span>
+          </div>
+          <div class="stat-item">
+            <span class="stat-num" id="totalClicks">0</span>
+            <span class="stat-label">Total Clicks</span>
+          </div>
+          <div class="stat-item">
+            <span class="stat-num" id="todayLinks">0</span>
+            <span class="stat-label">Created Today</span>
+          </div>
+        </div>
+
+        <!-- Create Link Form -->
+        <div class="card create-card">
+          <h2>✂️ Create Short Link</h2>
+
+          <div class="form-group">
+            <label>Destination URL <span class="required">*</span></label>
+            <input
+              type="url"
+              id="originalUrl"
+              placeholder="https://example.com/your-very-long-url"
+            />
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label>Custom Slug (optional)</label>
+              <div class="slug-input-wrap">
+                <span class="slug-prefix">thedigita-2011.com/r/</span>
+                <input
+                  type="text"
+                  id="customSlug"
+                  placeholder="my-link"
+                  maxlength="30"
+                />
+              </div>
+            </div>
+            <div class="form-group">
+              <label>Password Protect (optional)</label>
+              <input type="password" id="linkPassword" placeholder="Leave empty for no password" />
+            </div>
+          </div>
+
+          <button class="btn-primary" id="createBtn" onclick="createLink()">
+            <span id="createBtnText">⚡ Create Short Link</span>
+            <span id="createBtnLoader" class="hidden">Creating...</span>
+          </button>
+
+          <!-- Result Box -->
+          <div id="resultBox" class="result-box hidden">
+            <div class="result-header">
+              <span>✅ Link Created!</span>
+              <button class="btn-copy" onclick="copyLink()">📋 Copy</button>
+            </div>
+            <div class="result-url" id="resultUrl"></div>
+            <div class="result-original" id="resultOriginal"></div>
+          </div>
+
+          <div id="createError" class="error-msg hidden"></div>
+        </div>
+
+        <!-- Links Table -->
+        <div class="card table-card">
+          <div class="table-header">
+            <h2>🔗 Your Links</h2>
+            <button class="btn-refresh" onclick="loadLinks()">↻ Refresh</button>
+          </div>
+
+          <div id="linksLoader" class="loader-wrap">
+            <div class="loader"></div>
+          </div>
+
+          <div id="linksEmpty" class="empty-state hidden">
+            <p>No links created yet. Create your first short link above!</p>
+          </div>
+
+          <div id="linksTable" class="hidden">
+            <div class="table-scroll">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Short URL</th>
+                    <th>Destination</th>
+                    <th>Clicks</th>
+                    <th>Created</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="linksBody"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </main>
+    </div>
+
+    <script src="/src/app.js"></script>
+  </body>
+</html>
