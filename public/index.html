@@ -4,148 +4,237 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>TheDigita Link Shortener</title>
-    <link rel="stylesheet" href="/src/style.css" />
     <meta name="robots" content="noindex, nofollow" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="/src/style.css" />
   </head>
   <body>
-    <!-- LOGIN SCREEN -->
-    <div id="loginScreen" class="screen active">
-      <div class="card">
-        <div class="logo">
-          <span class="logo-icon">⚡</span>
+
+    <!-- ===== LOGIN SCREEN ===== -->
+    <div id="loginScreen" class="screen screen-login">
+      <div class="login-card">
+        <div class="login-logo">
+          <div class="logo-icon-wrap">
+            <span class="logo-icon">⚡</span>
+          </div>
           <h1>TheDigita Links</h1>
-          <p>Your private link shortener</p>
+          <p>Private link shortener dashboard</p>
         </div>
+
         <div class="form-group">
-          <label>Admin Password</label>
-          <input
-            type="password"
-            id="loginKey"
-            placeholder="Enter your admin key"
-            autocomplete="current-password"
-          />
+          <label for="loginKey">Admin Key</label>
+          <div class="input-wrap">
+            <span class="input-icon">🔑</span>
+            <input
+              type="password"
+              id="loginKey"
+              placeholder="Enter your admin key"
+              autocomplete="current-password"
+            />
+          </div>
         </div>
-        <button class="btn-primary" onclick="login()">Access Dashboard</button>
-        <div id="loginError" class="error-msg hidden">
-          ❌ Invalid admin key
+
+        <button class="btn-primary" id="loginBtn" onclick="login()">
+          <span id="loginBtnText">Access Dashboard</span>
+          <span id="loginBtnLoader" class="btn-loader hidden">
+            <span class="spinner-sm"></span> Verifying...
+          </span>
+        </button>
+
+        <div id="loginError" class="alert alert-error hidden">
+          ❌ Invalid admin key. Please try again.
         </div>
       </div>
     </div>
 
-    <!-- DASHBOARD SCREEN -->
+    <!-- ===== DASHBOARD SCREEN ===== -->
     <div id="dashboardScreen" class="screen hidden">
+
       <!-- Header -->
       <header class="header">
         <div class="header-inner">
-          <div class="logo-sm">
-            <span>⚡</span>
-            <strong>TheDigita Links</strong>
+          <div class="header-logo">
+            <span class="header-logo-icon">⚡</span>
+            <span class="header-logo-text">TheDigita Links</span>
           </div>
-          <button class="btn-logout" onclick="logout()">Logout</button>
+          <div class="header-actions">
+            <span class="header-domain">thedigita-2011.com</span>
+            <button class="btn-logout" onclick="logout()">
+              Sign Out
+            </button>
+          </div>
         </div>
       </header>
 
-      <!-- Main Content -->
+      <!-- Main -->
       <main class="main">
-        <!-- Stats Bar -->
-        <div class="stats-bar" id="statsBar">
-          <div class="stat-item">
-            <span class="stat-num" id="totalLinks">0</span>
-            <span class="stat-label">Total Links</span>
+
+        <!-- Stats -->
+        <div class="stats-grid">
+          <div class="stat-card">
+            <div class="stat-icon">🔗</div>
+            <div class="stat-info">
+              <span class="stat-num" id="totalLinks">0</span>
+              <span class="stat-label">Total Links</span>
+            </div>
           </div>
-          <div class="stat-item">
-            <span class="stat-num" id="totalClicks">0</span>
-            <span class="stat-label">Total Clicks</span>
+          <div class="stat-card">
+            <div class="stat-icon">👆</div>
+            <div class="stat-info">
+              <span class="stat-num" id="totalClicks">0</span>
+              <span class="stat-label">Total Clicks</span>
+            </div>
           </div>
-          <div class="stat-item">
-            <span class="stat-num" id="todayLinks">0</span>
-            <span class="stat-label">Created Today</span>
+          <div class="stat-card">
+            <div class="stat-icon">📅</div>
+            <div class="stat-info">
+              <span class="stat-num" id="todayLinks">0</span>
+              <span class="stat-label">Created Today</span>
+            </div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon">🏆</div>
+            <div class="stat-info">
+              <span class="stat-num" id="topClicks">0</span>
+              <span class="stat-label">Most Clicks</span>
+            </div>
           </div>
         </div>
 
-        <!-- Create Link Form -->
-        <div class="card create-card">
-          <h2>✂️ Create Short Link</h2>
-
-          <div class="form-group">
-            <label>Destination URL <span class="required">*</span></label>
-            <input
-              type="url"
-              id="originalUrl"
-              placeholder="https://example.com/your-very-long-url"
-            />
+        <!-- Create Form -->
+        <div class="panel">
+          <div class="panel-header">
+            <h2>✂️ Create Short Link</h2>
           </div>
+          <div class="panel-body">
 
-          <div class="form-row">
             <div class="form-group">
-              <label>Custom Slug (optional)</label>
-              <div class="slug-input-wrap">
-                <span class="slug-prefix">thedigita-2011.com/r/</span>
+              <label for="originalUrl">
+                Destination URL <span class="req">*</span>
+              </label>
+              <div class="input-wrap">
+                <span class="input-icon">🌐</span>
                 <input
-                  type="text"
-                  id="customSlug"
-                  placeholder="my-link"
-                  maxlength="30"
+                  type="url"
+                  id="originalUrl"
+                  placeholder="https://example.com/your-very-long-link-here"
                 />
               </div>
             </div>
-            <div class="form-group">
-              <label>Password Protect (optional)</label>
-              <input type="password" id="linkPassword" placeholder="Leave empty for no password" />
+
+            <div class="form-row">
+              <div class="form-group">
+                <label for="customSlug">Custom Slug <span class="opt">(optional)</span></label>
+                <div class="slug-wrap">
+                  <span class="slug-prefix">thedigita-2011.com/r/</span>
+                  <input
+                    type="text"
+                    id="customSlug"
+                    placeholder="my-link"
+                    maxlength="30"
+                  />
+                </div>
+                <span class="field-hint">Leave empty for auto-generated slug</span>
+              </div>
+
+              <div class="form-group">
+                <label for="linkPassword">Password <span class="opt">(optional)</span></label>
+                <div class="input-wrap">
+                  <span class="input-icon">🔒</span>
+                  <input
+                    type="password"
+                    id="linkPassword"
+                    placeholder="Protect with a password"
+                  />
+                </div>
+                <span class="field-hint">Leave empty for public access</span>
+              </div>
             </div>
-          </div>
 
-          <button class="btn-primary" id="createBtn" onclick="createLink()">
-            <span id="createBtnText">⚡ Create Short Link</span>
-            <span id="createBtnLoader" class="hidden">Creating...</span>
-          </button>
+            <button class="btn-primary btn-create" id="createBtn" onclick="createLink()">
+              <span id="createBtnText">⚡ Create Short Link</span>
+              <span id="createBtnLoader" class="btn-loader hidden">
+                <span class="spinner-sm"></span> Creating...
+              </span>
+            </button>
 
-          <!-- Result Box -->
-          <div id="resultBox" class="result-box hidden">
-            <div class="result-header">
-              <span>✅ Link Created!</span>
-              <button class="btn-copy" onclick="copyLink()">📋 Copy</button>
+            <!-- Success Result -->
+            <div id="resultBox" class="result-box hidden">
+              <div class="result-top">
+                <div class="result-badge">✅ Link Created Successfully!</div>
+                <button class="btn-copy-main" onclick="copyLink()" id="copyMainBtn">
+                  📋 Copy Link
+                </button>
+              </div>
+              <div class="result-url" id="resultUrl"></div>
+              <div class="result-arrow">redirects to</div>
+              <div class="result-original" id="resultOriginal"></div>
             </div>
-            <div class="result-url" id="resultUrl"></div>
-            <div class="result-original" id="resultOriginal"></div>
-          </div>
 
-          <div id="createError" class="error-msg hidden"></div>
+            <!-- Error -->
+            <div id="createError" class="alert alert-error hidden"></div>
+
+          </div>
         </div>
 
         <!-- Links Table -->
-        <div class="card table-card">
-          <div class="table-header">
-            <h2>🔗 Your Links</h2>
-            <button class="btn-refresh" onclick="loadLinks()">↻ Refresh</button>
+        <div class="panel">
+          <div class="panel-header">
+            <h2>🔗 All Links</h2>
+            <button class="btn-refresh" onclick="loadLinks()">
+              <span id="refreshIcon">↻</span> Refresh
+            </button>
           </div>
+          <div class="panel-body no-pad">
 
-          <div id="linksLoader" class="loader-wrap">
-            <div class="loader"></div>
-          </div>
-
-          <div id="linksEmpty" class="empty-state hidden">
-            <p>No links created yet. Create your first short link above!</p>
-          </div>
-
-          <div id="linksTable" class="hidden">
-            <div class="table-scroll">
-              <table>
-                <thead>
-                  <tr>
-                    <th>Short URL</th>
-                    <th>Destination</th>
-                    <th>Clicks</th>
-                    <th>Created</th>
-                    <th>Actions</th>
-                  </tr>
-                </thead>
-                <tbody id="linksBody"></tbody>
-              </table>
+            <!-- Loading -->
+            <div id="linksLoader" class="loader-wrap">
+              <div class="spinner"></div>
+              <p>Loading links...</p>
             </div>
+
+            <!-- Empty -->
+            <div id="linksEmpty" class="empty-state hidden">
+              <div class="empty-icon">🔗</div>
+              <h3>No links yet</h3>
+              <p>Create your first short link above to get started!</p>
+            </div>
+
+            <!-- Table -->
+            <div id="linksTable" class="hidden">
+              <div class="table-scroll">
+                <table>
+                  <thead>
+                    <tr>
+                      <th>#</th>
+                      <th>Short URL</th>
+                      <th>Destination</th>
+                      <th>🔒</th>
+                      <th>Clicks</th>
+                      <th>Created</th>
+                      <th>Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody id="linksBody"></tbody>
+                </table>
+              </div>
+            </div>
+
           </div>
         </div>
+
       </main>
+
+      <!-- Footer -->
+      <footer class="footer">
+        <p>TheDigita Links &copy; 2024 &bull; thedigita-2011.com</p>
+      </footer>
+
     </div>
 
     <script src="/src/app.js"></script>
