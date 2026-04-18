@@ -31,7 +31,6 @@ exports.handler = async (event) => {
       };
     }
 
-    // If password protected, show password page
     if (data.password) {
       const providedPassword = event.queryStringParameters?.p;
       if (providedPassword !== data.password) {
@@ -43,7 +42,6 @@ exports.handler = async (event) => {
       }
     }
 
-    // Increment clicks (fire and forget)
     supabase
       .from("links")
       .update({ clicks: (data.clicks || 0) + 1 })
@@ -77,9 +75,9 @@ function generatePasswordPage(slug) {
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Protected Link - TheDigita</title>
   <style>
-    * { margin: 0; padding: 0; box-sizing: border-box; }
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
     body {
-      font-family: 'Segoe UI', sans-serif;
+      font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif;
       background: linear-gradient(135deg, #0f0f1a 0%, #1a1a2e 50%, #16213e 100%);
       min-height: 100vh;
       display: flex;
@@ -96,22 +94,25 @@ function generatePasswordPage(slug) {
       width: 100%;
       max-width: 420px;
       text-align: center;
+      margin: 20px;
     }
-    .icon { font-size: 48px; margin-bottom: 16px; }
-    h1 { font-size: 24px; margin-bottom: 8px; }
-    p { color: rgba(255,255,255,0.6); margin-bottom: 24px; font-size: 14px; }
+    .icon { font-size: 52px; margin-bottom: 16px; }
+    h1 { font-size: 24px; font-weight: 700; margin-bottom: 8px; }
+    p { color: rgba(255,255,255,0.55); margin-bottom: 28px; font-size: 14px; }
     input {
       width: 100%;
       padding: 14px 16px;
       border-radius: 10px;
-      border: 1px solid rgba(255,255,255,0.2);
-      background: rgba(255,255,255,0.08);
+      border: 1px solid rgba(255,255,255,0.15);
+      background: rgba(255,255,255,0.07);
       color: #fff;
-      font-size: 16px;
-      margin-bottom: 16px;
+      font-size: 15px;
+      margin-bottom: 14px;
       outline: none;
+      transition: border-color 0.2s;
     }
     input:focus { border-color: #7c3aed; }
+    input::placeholder { color: rgba(255,255,255,0.3); }
     button {
       width: 100%;
       padding: 14px;
@@ -119,25 +120,40 @@ function generatePasswordPage(slug) {
       border: none;
       background: linear-gradient(135deg, #7c3aed, #4f46e5);
       color: #fff;
-      font-size: 16px;
+      font-size: 15px;
       font-weight: 600;
       cursor: pointer;
-      transition: opacity 0.2s;
+      transition: opacity 0.2s, transform 0.1s;
     }
-    button:hover { opacity: 0.9; }
+    button:hover { opacity: 0.9; transform: translateY(-1px); }
+    .error {
+      margin-top: 14px;
+      padding: 10px;
+      border-radius: 8px;
+      background: rgba(239,68,68,0.1);
+      border: 1px solid rgba(239,68,68,0.2);
+      color: #fca5a5;
+      font-size: 13px;
+      display: none;
+    }
   </style>
 </head>
 <body>
   <div class="card">
     <div class="icon">🔒</div>
     <h1>Protected Link</h1>
-    <p>This link requires a password to access</p>
+    <p>This link requires a password to continue</p>
     <form onsubmit="unlock(event)">
       <input type="password" id="pwd" placeholder="Enter password" required autofocus />
-      <button type="submit">Unlock Link</button>
+      <button type="submit">Unlock &amp; Continue →</button>
     </form>
+    <div class="error" id="errMsg">❌ Incorrect password, try again</div>
   </div>
   <script>
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.get('wrong') === '1') {
+      document.getElementById('errMsg').style.display = 'block';
+    }
     function unlock(e) {
       e.preventDefault();
       const pwd = document.getElementById('pwd').value;
